@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Режим лечения</title>
+    <title>Контроль лечения</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -23,73 +23,143 @@
             text-align: center;
             color: #333;
         }
-        .task {
+        .medication {
             display: flex;
             justify-content: space-between;
+            align-items: center;
             padding: 10px;
-            margin: 5px 0;
+            margin: 10px 0;
             background: #f1f1f1;
             border-radius: 5px;
         }
-        .task button {
-            background: #4CAF50;
-            color: white;
-            border: none;
-            padding: 5px 10px;
-            cursor: pointer;
-        }
-        .task button:hover {
-            background: #45a049;
-        }
-        .task.completed {
+        .medication.completed {
             background: #d4edda;
             text-decoration: line-through;
+        }
+        .medication button {
+            padding: 5px 10px;
+            border: none;
+            background: #4CAF50;
+            color: white;
+            cursor: pointer;
+            border-radius: 3px;
+        }
+        .medication button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .medication .info {
+            max-width: 70%;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Режим лечения</h1>
-        <ul id="taskList"></ul>
+        <h1>Контроль лечения</h1>
+        <div id="medicationList"></div>
     </div>
 
     <script>
-        const tasks = [
-            { text: "Домашний режим, обильное теплое питье", completed: false },
-            { text: "Полидекса: 1 впрыск 3 раза в день (7-10 дней)", completed: false },
-            { text: "Сиалор или Протаргол 2%: по 3 капли 3 раза в день (7 дней)", completed: false },
-            { text: "Назонекс или Авамис: 1 впрыск 1 раз в день утром (7-14 дней)", completed: false },
-            { text: "Полоскание горла фурацилином: 3-4 раза в день (7 дней)", completed: false },
-            { text: "Ингаляции с Пульмикортом (0.5+2 мл физраствора): 2 раза в день (7-10 дней)", completed: false },
-            { text: "Кларитромицин 500 мг: по 1 таблетке 2 раза в день (10 дней)", completed: false },
-            { text: "Контроль ОАК", completed: false },
-            { text: "Рентген ОГК", completed: false },
-            { text: "Консультация ЛОР-врача для исключения гайморита", completed: false }
+        const medications = [
+            { 
+                name: "Полидекса (в нос, 1 впрыск)", 
+                frequency: 3, 
+                duration: 10, 
+                takenToday: 0, 
+                lastTaken: null, 
+                interval: 6 * 60 * 60 * 1000 // 6 часов
+            },
+            { 
+                name: "Сиалор или Протаргол 2% (по 3 капли)", 
+                frequency: 3, 
+                duration: 7, 
+                takenToday: 0, 
+                lastTaken: null, 
+                interval: 6 * 60 * 60 * 1000 // 6 часов
+            },
+            { 
+                name: "Назонекс или Авамис (1 впрыск утром)", 
+                frequency: 1, 
+                duration: 14, 
+                takenToday: 0, 
+                lastTaken: null, 
+                interval: 24 * 60 * 60 * 1000 // 24 часа
+            },
+            { 
+                name: "Полоскание горла фурацилином", 
+                frequency: 4, 
+                duration: 7, 
+                takenToday: 0, 
+                lastTaken: null, 
+                interval: 4 * 60 * 60 * 1000 // 4 часа
+            },
+            { 
+                name: "Ингаляция с Пульмикортом (0.5 + 2 мл физраствора)", 
+                frequency: 2, 
+                duration: 10, 
+                takenToday: 0, 
+                lastTaken: null, 
+                interval: 12 * 60 * 60 * 1000 // 12 часов
+            },
+            { 
+                name: "Кларитромицин 500 мг (1 таблетка)", 
+                frequency: 2, 
+                duration: 10, 
+                takenToday: 0, 
+                lastTaken: null, 
+                interval: 12 * 60 * 60 * 1000 // 12 часов
+            }
         ];
 
-        const taskList = document.getElementById('taskList');
+        const medicationList = document.getElementById("medicationList");
 
-        function renderTasks() {
-            taskList.innerHTML = '';
-            tasks.forEach((task, index) => {
-                const li = document.createElement('li');
-                li.className = `task ${task.completed ? 'completed' : ''}`;
-                li.innerHTML = `
-                    <span>${task.text}</span>
-                    <button onclick="toggleTask(${index})">
-                        ${task.completed ? 'Восстановить' : 'Готово'}
+        function renderMedications() {
+            medicationList.innerHTML = '';
+            medications.forEach((med, index) => {
+                const now = new Date().getTime();
+                const nextAvailable = med.lastTaken ? med.lastTaken + med.interval : 0;
+                const canTake = med.takenToday < med.frequency && now >= nextAvailable;
+
+                const div = document.createElement('div');
+                div.className = `medication ${med.takenToday >= med.frequency ? 'completed' : ''}`;
+                div.innerHTML = `
+                    <div class="info">
+                        <strong>${med.name}</strong><br>
+                        Сегодня: ${med.takenToday}/${med.frequency} раз<br>
+                        ${canTake ? '' : `Следующий прием через ${Math.ceil((nextAvailable - now) / (60 * 1000))} минут`}
+                    </div>
+                    <button onclick="takeMedication(${index})" ${!canTake ? 'disabled' : ''}>
+                        Принять
                     </button>
                 `;
-                taskList.appendChild(li);
+                medicationList.appendChild(div);
             });
         }
 
-        function toggleTask(index) {
-            tasks[index].completed = !tasks[index].completed;
-            renderTasks();
+        function takeMedication(index) {
+            const now = new Date().getTime();
+            medications[index].takenToday++;
+            medications[index].lastTaken = now;
+            renderMedications();
         }
 
-        renderTasks();
+        function resetMedications() {
+            medications.forEach(med => {
+                med.takenToday = 0;
+                med.lastTaken = null;
+            });
+            renderMedications();
+        }
+
+        // Сбросить приемы в начале нового дня
+        const now = new Date();
+        const nextReset = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0) - now;
+        setTimeout(() => {
+            resetMedications();
+            setInterval(resetMedications, 24 * 60 * 60 * 1000); // Каждые 24 часа
+        }, nextReset);
+
+        renderMedications();
     </script>
 </body>
 </html>
