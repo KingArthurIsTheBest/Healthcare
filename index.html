@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Режим лечения</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f9f9f9;
+        }
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #fff;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .task {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            margin: 5px 0;
+            background: #f1f1f1;
+            border-radius: 5px;
+        }
+        .task button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+        .task button:hover {
+            background: #45a049;
+        }
+        .task.completed {
+            background: #d4edda;
+            text-decoration: line-through;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Режим лечения</h1>
+        <ul id="taskList"></ul>
+    </div>
+
+    <script>
+        const tasks = [
+            { text: "Домашний режим, обильное теплое питье", completed: false },
+            { text: "Полидекса: 1 впрыск 3 раза в день (7-10 дней)", completed: false },
+            { text: "Сиалор или Протаргол 2%: по 3 капли 3 раза в день (7 дней)", completed: false },
+            { text: "Назонекс или Авамис: 1 впрыск 1 раз в день утром (7-14 дней)", completed: false },
+            { text: "Полоскание горла фурацилином: 3-4 раза в день (7 дней)", completed: false },
+            { text: "Ингаляции с Пульмикортом (0.5+2 мл физраствора): 2 раза в день (7-10 дней)", completed: false },
+            { text: "Кларитромицин 500 мг: по 1 таблетке 2 раза в день (10 дней)", completed: false },
+            { text: "Контроль ОАК", completed: false },
+            { text: "Рентген ОГК", completed: false },
+            { text: "Консультация ЛОР-врача для исключения гайморита", completed: false }
+        ];
+
+        const taskList = document.getElementById('taskList');
+
+        function renderTasks() {
+            taskList.innerHTML = '';
+            tasks.forEach((task, index) => {
+                const li = document.createElement('li');
+                li.className = `task ${task.completed ? 'completed' : ''}`;
+                li.innerHTML = `
+                    <span>${task.text}</span>
+                    <button onclick="toggleTask(${index})">
+                        ${task.completed ? 'Восстановить' : 'Готово'}
+                    </button>
+                `;
+                taskList.appendChild(li);
+            });
+        }
+
+        function toggleTask(index) {
+            tasks[index].completed = !tasks[index].completed;
+            renderTasks();
+        }
+
+        renderTasks();
+    </script>
+</body>
+</html>
