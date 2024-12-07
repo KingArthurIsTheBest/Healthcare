@@ -63,51 +63,33 @@
         const medications = [
             { 
                 name: "Полидекса (в нос, 1 впрыск)", 
-                frequency: 3, 
-                duration: 10, 
-                takenToday: 0, 
-                lastTaken: null, 
-                interval: 6 * 60 * 60 * 1000 // 6 часов
+                interval: 0, // Начальное лекарство, интервал отсутствует
+                completed: false,
+                nextAvailable: null
             },
             { 
-                name: "Сиалор или Протаргол 2% (по 3 капли)", 
-                frequency: 3, 
-                duration: 7, 
-                takenToday: 0, 
-                lastTaken: null, 
-                interval: 6 * 60 * 60 * 1000 // 6 часов
+                name: "Протаргол (через 20 минут)", 
+                interval: 20 * 60 * 1000, // 20 минут
+                completed: false,
+                nextAvailable: null
             },
             { 
-                name: "Назонекс или Авамис (1 впрыск утром)", 
-                frequency: 1, 
-                duration: 14, 
-                takenToday: 0, 
-                lastTaken: null, 
-                interval: 24 * 60 * 60 * 1000 // 24 часа
+                name: "Назонекс (через 30 минут после Протаргола)", 
+                interval: 30 * 60 * 1000, // 30 минут
+                completed: false,
+                nextAvailable: null
             },
             { 
                 name: "Полоскание горла фурацилином", 
-                frequency: 4, 
-                duration: 7, 
-                takenToday: 0, 
-                lastTaken: null, 
-                interval: 4 * 60 * 60 * 1000 // 4 часа
+                interval: 0, // Можно в любое время
+                completed: false,
+                nextAvailable: null
             },
             { 
-                name: "Ингаляция с Пульмикортом (0.5 + 2 мл физраствора)", 
-                frequency: 2, 
-                duration: 10, 
-                takenToday: 0, 
-                lastTaken: null, 
-                interval: 12 * 60 * 60 * 1000 // 12 часов
-            },
-            { 
-                name: "Кларитромицин 500 мг (1 таблетка)", 
-                frequency: 2, 
-                duration: 10, 
-                takenToday: 0, 
-                lastTaken: null, 
-                interval: 12 * 60 * 60 * 1000 // 12 часов
+                name: "Ингаляция с Пульмикортом", 
+                interval: 12 * 60 * 60 * 1000, // Раз в 12 часов
+                completed: false,
+                nextAvailable: null
             }
         ];
 
@@ -115,20 +97,19 @@
 
         function renderMedications() {
             medicationList.innerHTML = '';
+            const now = new Date().getTime();
+
             medications.forEach((med, index) => {
-                const now = new Date().getTime();
-                const nextAvailable = med.lastTaken ? med.lastTaken + med.interval : 0;
-                const canTake = med.takenToday < med.frequency && now >= nextAvailable;
+                const available = !med.completed && (med.nextAvailable === null || now >= med.nextAvailable);
 
                 const div = document.createElement('div');
-                div.className = `medication ${med.takenToday >= med.frequency ? 'completed' : ''}`;
+                div.className = `medication ${med.completed ? 'completed' : ''}`;
                 div.innerHTML = `
                     <div class="info">
                         <strong>${med.name}</strong><br>
-                        Сегодня: ${med.takenToday}/${med.frequency} раз<br>
-                        ${canTake ? '' : `Следующий прием через ${Math.ceil((nextAvailable - now) / (60 * 1000))} минут`}
+                        ${!available && med.nextAvailable ? `Можно через ${Math.ceil((med.nextAvailable - now) / (60 * 1000))} минут` : ''}
                     </div>
-                    <button onclick="takeMedication(${index})" ${!canTake ? 'disabled' : ''}>
+                    <button onclick="takeMedication(${index})" ${!available ? 'disabled' : ''}>
                         Принять
                     </button>
                 `;
@@ -138,20 +119,28 @@
 
         function takeMedication(index) {
             const now = new Date().getTime();
-            medications[index].takenToday++;
-            medications[index].lastTaken = now;
+
+            // Помечаем текущее лекарство как выполненное
+            medications[index].completed = true;
+
+            // Устанавливаем время для следующего лекарства, если оно существует
+            if (index + 1 < medications.length && medications[index + 1].interval > 0) {
+                medications[index + 1].nextAvailable = now + medications[index + 1].interval;
+            }
+
             renderMedications();
         }
 
         function resetMedications() {
-            medications.forEach(med => {
-                med.takenToday = 0;
-                med.lastTaken = null;
+            const now = new Date().getTime();
+            medications.forEach((med, index) => {
+                med.completed = false;
+                med.nextAvailable = index === 0 ? null : now + med.interval;
             });
             renderMedications();
         }
 
-        // Сбросить приемы в начале нового дня
+        // Сбрасываем приемы в начале нового дня
         const now = new Date();
         const nextReset = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0) - now;
         setTimeout(() => {
